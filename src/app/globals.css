@@ -86,3 +86,17 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  .scan-line {
+    animation: scan 3s ease-in-out infinite;
+  }
+  @keyframes scan {
+    0%, 100% {
+      transform: translateY(-10%);
+    }
+    50% {
+      transform: translateY(100%);
+    }
+  }
+}
