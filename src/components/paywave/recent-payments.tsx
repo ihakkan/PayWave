@@ -4,43 +4,43 @@ import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
 
 const transactions = [
   {
-    name: "John Doe",
-    amount: "50.00",
+    name: "Amit Sharma",
+    amount: "500.00",
     date: "20 May 2024",
     type: "paid",
-    avatar: "https://picsum.photos/seed/john/100",
+    avatar: "https://picsum.photos/seed/amit/100",
     avatarHint: "man portrait"
   },
   {
-    name: "Jane Smith",
-    amount: "25.50",
+    name: "Priya Patel",
+    amount: "250.50",
     date: "19 May 2024",
     type: "received",
-    avatar: "https://picsum.photos/seed/jane/100",
+    avatar: "https://picsum.photos/seed/priya/100",
     avatarHint: "woman portrait"
   },
   {
     name: "Electricity Bill",
-    amount: "75.20",
+    amount: "750.20",
     date: "18 May 2024",
     type: "paid",
     avatar: "https://picsum.photos/seed/bill/100",
     avatarHint: "electricity bulb"
   },
   {
-    name: "Pizza Place",
-    amount: "15.00",
+    name: "Swiggy",
+    amount: "150.00",
     date: "17 May 2024",
     type: "paid",
-    avatar: "https://picsum.photos/seed/pizza/100",
-    avatarHint: "pizza slice"
+    avatar: "https://picsum.photos/seed/swiggy/100",
+    avatarHint: "food delivery"
   },
   {
-    name: "Michael Brown",
-    amount: "100.00",
+    name: "Rajesh Kumar",
+    amount: "1000.00",
     date: "16 May 2024",
     type: "received",
-    avatar: "https://picsum.photos/seed/michael/100",
+    avatar: "https://picsum.photos/seed/rajesh/100",
     avatarHint: "man face"
   },
 ];
@@ -68,7 +68,7 @@ function TransactionItem({ name, amount, date, type, avatar, avatarHint }: Trans
       </div>
       <div className="text-right flex items-center space-x-2">
         <p className={`font-bold text-sm ${isPaid ? 'text-destructive' : 'text-success'}`}>
-          {isPaid ? '- ' : '+ '}${amount}
+          {isPaid ? '- ' : '+ '}₹{amount}
         </p>
         {isPaid ? <ArrowUpRight className="h-4 w-4 text-destructive" /> : <ArrowDownLeft className="h-4 w-4 text-success" />}
       </div>
