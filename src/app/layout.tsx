@@ -1,6 +1,7 @@
 import type {Metadata} from 'next';
 import { Toaster } from "@/components/ui/toaster"
 import './globals.css';
+import { LayoutWrapper } from '@/components/layout-wrapper';
 
 export const metadata: Metadata = {
   title: 'PayWave',
@@ -23,7 +24,9 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icon-192x192.png"></link>
       </head>
       <body className="font-body antialiased">
-        {children}
+        <LayoutWrapper>
+          {children}
+        </LayoutWrapper>
         <Toaster />
       </body>
     </html>
