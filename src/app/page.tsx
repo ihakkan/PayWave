@@ -8,8 +8,8 @@ import { BottomNav } from '@/components/paywave/bottom-nav';
 
 export default function Home() {
   return (
-    <div className="bg-neutral-900 flex justify-center items-center min-h-screen p-4">
-      <div className="w-full max-w-sm h-[844px] bg-background rounded-[40px] shadow-2xl overflow-hidden flex flex-col relative border-8 border-neutral-800">
+    <div className="min-h-screen bg-neutral-900 md:flex md:items-center md:justify-center md:p-4">
+      <div className="w-full h-full bg-background md:max-w-sm md:h-[844px] md:rounded-[40px] md:shadow-2xl md:border-8 md:border-neutral-800 overflow-hidden flex flex-col relative">
         <Header />
         <main className="flex-1 overflow-y-auto pb-20 no-scrollbar">
           <div className="p-4 space-y-6">

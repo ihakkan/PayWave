@@ -63,14 +63,14 @@ function TransactionItem({ name, amount, date, type, avatar, avatarHint }: Trans
         <AvatarFallback>{name.charAt(0)}</AvatarFallback>
       </Avatar>
       <div className="flex-1">
-        <p className="font-semibold text-sm">{isPaid ? 'Paid to' : 'Received from'} {name}</p>
+        <p className="font-semibold text-sm">{name}</p>
         <p className="text-xs text-muted-foreground">{date}</p>
       </div>
       <div className="text-right flex items-center space-x-2">
-        <p className={`font-bold text-sm ${isPaid ? '' : 'text-success'}`}>
+        <p className={`font-bold text-sm ${isPaid ? 'text-destructive' : 'text-success'}`}>
           {isPaid ? '- ' : '+ '}${amount}
         </p>
-        {isPaid ? <ArrowUpRight className="h-4 w-4 text-foreground/70" /> : <ArrowDownLeft className="h-4 w-4 text-success" />}
+        {isPaid ? <ArrowUpRight className="h-4 w-4 text-destructive" /> : <ArrowDownLeft className="h-4 w-4 text-success" />}
       </div>
     </div>
   );
