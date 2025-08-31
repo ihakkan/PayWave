@@ -31,6 +31,7 @@ export default function ScanPage() {
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        videoRef.current.play();
       }
     } catch (error) {
       console.error('Error accessing camera:', error);
@@ -64,25 +65,7 @@ export default function ScanPage() {
             </header>
 
             <main className="flex-1 bg-black relative flex justify-center items-center">
-                {hasCameraPermission ? (
-                    <>
-                        <video ref={videoRef} className="w-full h-full object-cover" autoPlay playsInline muted />
-                        <div className="absolute inset-0 flex justify-center items-center">
-                            <div className="relative w-3/4 aspect-square">
-                                {/* Corner brackets */}
-                                <div className="absolute -top-1 -left-1 w-8 h-8 border-t-4 border-l-4 border-white rounded-tl-lg"></div>
-                                <div className="absolute -top-1 -right-1 w-8 h-8 border-t-4 border-r-4 border-white rounded-tr-lg"></div>
-                                <div className="absolute -bottom-1 -left-1 w-8 h-8 border-b-4 border-l-4 border-white rounded-bl-lg"></div>
-                                <div className="absolute -bottom-1 -right-1 w-8 h-8 border-b-4 border-r-4 border-white rounded-br-lg"></div>
-
-                                {/* Scanning line */}
-                                <div className="absolute top-0 left-0 right-0 h-full overflow-hidden rounded-md">
-                                    <div className="scan-line absolute top-0 left-0 right-0 h-1 bg-white/80 shadow-[0_0_10px_2px_#fff]"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </>
-                ) : (
+                {hasCameraPermission === null && (
                     <div className="absolute inset-0 flex flex-col justify-center items-center bg-black/80 p-8 text-center">
                         <CameraOff className="w-16 h-16 text-muted-foreground mb-4" />
                         <h2 className="text-2xl font-bold text-white mb-2">Camera Access</h2>
@@ -91,16 +74,36 @@ export default function ScanPage() {
                             <Camera className="mr-2 h-5 w-5" />
                             Grant Permission
                         </Button>
-                        {hasCameraPermission === false && (
-                           <div className="mt-4">
-                             <Alert variant="destructive" className="max-w-sm">
-                                <AlertTitle>Camera Access Denied</AlertTitle>
-                                <AlertDescription>
-                                    You have denied camera access. Please grant permissions in your browser or system settings to continue.
-                                </AlertDescription>
-                            </Alert>
-                           </div>
-                        )}
+                    </div>
+                )}
+
+                <video ref={videoRef} className="w-full h-full object-cover" autoPlay playsInline muted />
+                
+                {hasCameraPermission && (
+                    <div className="absolute inset-0 flex justify-center items-center">
+                        <div className="relative w-3/4 aspect-square">
+                            {/* Corner brackets */}
+                            <div className="absolute -top-1 -left-1 w-8 h-8 border-t-4 border-l-4 border-white rounded-tl-lg"></div>
+                            <div className="absolute -top-1 -right-1 w-8 h-8 border-t-4 border-r-4 border-white rounded-tr-lg"></div>
+                            <div className="absolute -bottom-1 -left-1 w-8 h-8 border-b-4 border-l-4 border-white rounded-bl-lg"></div>
+                            <div className="absolute -bottom-1 -right-1 w-8 h-8 border-b-4 border-r-4 border-white rounded-br-lg"></div>
+
+                            {/* Scanning line */}
+                            <div className="absolute top-0 left-0 right-0 h-full overflow-hidden rounded-md">
+                                <div className="scan-line absolute top-0 left-0 right-0 h-1 bg-white/80 shadow-[0_0_10px_2px_#fff]"></div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+                
+                {hasCameraPermission === false && (
+                    <div className="absolute inset-0 flex flex-col justify-center items-center bg-black/80 p-8 text-center">
+                       <Alert variant="destructive" className="max-w-sm">
+                          <AlertTitle>Camera Access Denied</AlertTitle>
+                          <AlertDescription>
+                              You have denied camera access. Please grant permissions in your browser or system settings to continue.
+                          </AlertDescription>
+                      </Alert>
                     </div>
                 )}
             </main>
