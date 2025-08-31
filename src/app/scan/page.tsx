@@ -19,7 +19,6 @@ declare global {
 export default function ScanPage() {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const { toast } = useToast();
@@ -33,36 +32,26 @@ export default function ScanPage() {
     }
   }, []);
 
-  const handleScan = useCallback(async (detector: any) => {
-    if (videoRef.current && videoRef.current.readyState === videoRef.current.HAVE_ENOUGH_DATA) {
-      try {
-        const barcodes = await detector.detect(videoRef.current);
-        if (barcodes.length > 0) {
-          setIsScanning(false);
-          const scannedValue = barcodes[0].rawValue;
-          
-          toast({
-            title: "Scan Successful",
-            description: `Data: ${scannedValue}`,
-            duration: 3000,
-          });
-
-          stopCamera();
-          
-          setTimeout(() => {
-            router.back();
-          }, 1000);
-
-        }
-      } catch (error) {
-        console.error("Barcode detection failed:", error);
-      }
-    }
-  }, [router, toast, stopCamera]);
-
+  const handleScanSuccess = useCallback((scannedValue: string) => {
+    setIsScanning(false);
+    toast({
+      title: "Scan Successful",
+      description: `Data: ${scannedValue}`,
+      duration: 3000,
+    });
+    stopCamera();
+    setTimeout(() => {
+      router.back();
+    }, 1000);
+  }, [router, stopCamera, toast]);
 
   const scanLoop = useCallback(async () => {
-    if (!isScanning) return;
+    if (!videoRef.current || videoRef.current.readyState !== videoRef.current.HAVE_ENOUGH_DATA) {
+        if(isScanning) {
+            animationFrameId.current = requestAnimationFrame(scanLoop);
+        }
+        return;
+    }
 
     if (!('BarcodeDetector' in window)) {
         console.log('Barcode Detector is not supported by this browser.');
@@ -77,15 +66,20 @@ export default function ScanPage() {
     
     const barcodeDetector = new window.BarcodeDetector();
 
-    const detect = async () => {
-        if(isScanning) {
-            await handleScan(barcodeDetector);
-            animationFrameId.current = requestAnimationFrame(detect);
+    try {
+        const barcodes = await barcodeDetector.detect(videoRef.current);
+        if (barcodes.length > 0) {
+            handleScanSuccess(barcodes[0].rawValue);
+            return;
         }
-    };
-    detect();
-
-  }, [isScanning, handleScan, toast]);
+    } catch (error) {
+        console.error("Barcode detection failed:", error);
+    }
+    
+    if(isScanning) {
+        animationFrameId.current = requestAnimationFrame(scanLoop);
+    }
+  }, [isScanning, handleScanSuccess, toast]);
 
   const getCameraPermission = async () => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
