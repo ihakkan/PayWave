@@ -1,17 +1,91 @@
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Camera, CameraOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 
+// Define the type for the BarcodeDetector if it's not globally available
+declare global {
+  interface Window {
+    BarcodeDetector: new () => {
+      detect(image: ImageBitmapSource): Promise<Array<{ rawValue: string }>>;
+    };
+  }
+}
+
 export default function ScanPage() {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+  const [isScanning, setIsScanning] = useState(false);
   const { toast } = useToast();
+  const animationFrameId = useRef<number>();
+
+  const stopCamera = useCallback(() => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+      videoRef.current.srcObject = null;
+    }
+  }, []);
+
+  const handleScan = useCallback(async (detector: any) => {
+    if (videoRef.current && videoRef.current.readyState === videoRef.current.HAVE_ENOUGH_DATA) {
+      try {
+        const barcodes = await detector.detect(videoRef.current);
+        if (barcodes.length > 0) {
+          setIsScanning(false);
+          const scannedValue = barcodes[0].rawValue;
+          
+          toast({
+            title: "Scan Successful",
+            description: `Data: ${scannedValue}`,
+            duration: 3000,
+          });
+
+          stopCamera();
+          
+          setTimeout(() => {
+            router.back();
+          }, 1000);
+
+        }
+      } catch (error) {
+        console.error("Barcode detection failed:", error);
+      }
+    }
+  }, [router, toast, stopCamera]);
+
+
+  const scanLoop = useCallback(async () => {
+    if (!isScanning) return;
+
+    if (!('BarcodeDetector' in window)) {
+        console.log('Barcode Detector is not supported by this browser.');
+        toast({
+            variant: "destructive",
+            title: "Unsupported Browser",
+            description: "QR code scanning is not supported by your browser."
+        });
+        setIsScanning(false);
+        return;
+    }
+    
+    const barcodeDetector = new window.BarcodeDetector();
+
+    const detect = async () => {
+        if(isScanning) {
+            await handleScan(barcodeDetector);
+            animationFrameId.current = requestAnimationFrame(detect);
+        }
+    };
+    detect();
+
+  }, [isScanning, handleScan, toast]);
 
   const getCameraPermission = async () => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -31,7 +105,8 @@ export default function ScanPage() {
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.play();
+        await videoRef.current.play();
+        setIsScanning(true);
       }
     } catch (error) {
       console.error('Error accessing camera:', error);
@@ -39,19 +114,30 @@ export default function ScanPage() {
       toast({
         variant: 'destructive',
         title: 'Camera Access Denied',
-        description: 'Please enable camera permissions in your browser settings to use this feature.',
+        description: 'Please enable camera permissions in your browser settings.',
       });
     }
   };
 
   useEffect(() => {
+    if(isScanning) {
+        scanLoop();
+    }
     return () => {
-        if (videoRef.current && videoRef.current.srcObject) {
-            const stream = videoRef.current.srcObject as MediaStream;
-            stream.getTracks().forEach(track => track.stop());
+        if(animationFrameId.current) {
+            cancelAnimationFrame(animationFrameId.current);
         }
     }
-  }, []);
+  }, [isScanning, scanLoop]);
+
+  useEffect(() => {
+    return () => {
+      stopCamera();
+      if (animationFrameId.current) {
+        cancelAnimationFrame(animationFrameId.current);
+      }
+    };
+  }, [stopCamera]);
 
   return (
     <div className="bg-neutral-900 flex justify-center items-center min-h-screen">
@@ -88,10 +174,11 @@ export default function ScanPage() {
                             <div className="absolute -bottom-1 -left-1 w-8 h-8 border-b-4 border-l-4 border-white rounded-bl-lg"></div>
                             <div className="absolute -bottom-1 -right-1 w-8 h-8 border-b-4 border-r-4 border-white rounded-br-lg"></div>
 
-                            {/* Scanning line */}
-                            <div className="absolute top-0 left-0 right-0 h-full overflow-hidden rounded-md">
-                                <div className="scan-line absolute top-0 left-0 right-0 h-1 bg-white/80 shadow-[0_0_10px_2px_#fff]"></div>
-                            </div>
+                            {isScanning && (
+                                <div className="absolute top-0 left-0 right-0 h-full overflow-hidden rounded-md">
+                                    <div className="scan-line absolute top-0 left-0 right-0 h-1 bg-white/80 shadow-[0_0_10px_2px_#fff]"></div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
@@ -110,7 +197,7 @@ export default function ScanPage() {
             
             <footer className="absolute bottom-0 left-0 right-0 z-20 p-4 bg-gradient-to-t from-black/50 to-transparent text-center">
                 <p className="text-white/80 text-sm">
-                    {hasCameraPermission ? "Align QR code within the frame to scan" : "Ready to scan?"}
+                    {isScanning ? "Align QR code within the frame to scan" : "Ready to scan?"}
                 </p>
             </footer>
         </div>
