@@ -46,42 +46,41 @@ export default function ScanPage() {
   }, [router, stopCamera, toast]);
 
   const scanLoop = useCallback(async () => {
-    if (!videoRef.current || videoRef.current.readyState !== videoRef.current.HAVE_ENOUGH_DATA) {
-        if(isScanning) {
-            animationFrameId.current = requestAnimationFrame(scanLoop);
-        }
-        return;
+    if (!isScanning || !videoRef.current || videoRef.current.readyState !== videoRef.current.HAVE_ENOUGH_DATA) {
+      if (isScanning) {
+        animationFrameId.current = requestAnimationFrame(scanLoop);
+      }
+      return;
     }
 
     if (!('BarcodeDetector' in window)) {
-        console.log('Barcode Detector is not supported by this browser.');
-        toast({
-            variant: "destructive",
-            title: "Unsupported Browser",
-            description: "QR code scanning is not supported by your browser."
-        });
-        setIsScanning(false);
-        return;
+      console.log('Barcode Detector is not supported by this browser.');
+      toast({
+        variant: "destructive",
+        title: "Unsupported Browser",
+        description: "QR code scanning is not supported by your browser."
+      });
+      setIsScanning(false);
+      return;
     }
     
-    const barcodeDetector = new window.BarcodeDetector();
-
     try {
-        const barcodes = await barcodeDetector.detect(videoRef.current);
-        if (barcodes.length > 0) {
-            handleScanSuccess(barcodes[0].rawValue);
-            return;
-        }
+      const barcodeDetector = new window.BarcodeDetector();
+      const barcodes = await barcodeDetector.detect(videoRef.current);
+      if (barcodes.length > 0) {
+        handleScanSuccess(barcodes[0].rawValue);
+        return;
+      }
     } catch (error) {
-        console.error("Barcode detection failed:", error);
+      console.error("Barcode detection failed:", error);
     }
     
-    if(isScanning) {
-        animationFrameId.current = requestAnimationFrame(scanLoop);
+    if (isScanning) {
+      animationFrameId.current = requestAnimationFrame(scanLoop);
     }
   }, [isScanning, handleScanSuccess, toast]);
 
-  const getCameraPermission = async () => {
+  const startScan = async () => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       console.error('Camera API not available in this browser.');
       toast({
@@ -96,7 +95,6 @@ export default function ScanPage() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
       setHasCameraPermission(true);
-
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
@@ -115,7 +113,11 @@ export default function ScanPage() {
 
   useEffect(() => {
     if(isScanning) {
-        scanLoop();
+      animationFrameId.current = requestAnimationFrame(scanLoop);
+    } else {
+      if(animationFrameId.current) {
+        cancelAnimationFrame(animationFrameId.current);
+      }
     }
     return () => {
         if(animationFrameId.current) {
@@ -127,17 +129,19 @@ export default function ScanPage() {
   useEffect(() => {
     return () => {
       stopCamera();
-      if (animationFrameId.current) {
-        cancelAnimationFrame(animationFrameId.current);
-      }
     };
   }, [stopCamera]);
+
+  const handleBack = () => {
+    stopCamera();
+    router.back();
+  }
 
   return (
     <div className="bg-neutral-900 flex justify-center items-center min-h-screen">
         <div className="w-full max-w-sm h-[844px] bg-neutral-900 rounded-[40px] shadow-2xl overflow-hidden flex flex-col relative border-8 border-neutral-800">
             <header className="absolute top-0 left-0 right-0 z-20 p-4 flex items-center justify-between bg-gradient-to-b from-black/50 to-transparent">
-                <Button variant="ghost" size="icon" className="text-white hover:bg-white/10" onClick={() => router.back()}>
+                <Button variant="ghost" size="icon" className="text-white hover:bg-white/10" onClick={handleBack}>
                     <ArrowLeft className="h-6 w-6" />
                 </Button>
                 <h1 className="text-xl font-bold text-white">Scan & Pay</h1>
@@ -146,11 +150,11 @@ export default function ScanPage() {
 
             <main className="flex-1 bg-black relative flex justify-center items-center">
                 {hasCameraPermission === null && (
-                    <div className="absolute inset-0 flex flex-col justify-center items-center bg-black/80 p-8 text-center">
+                    <div className="absolute inset-0 flex flex-col justify-center items-center bg-black/80 p-8 text-center z-10">
                         <CameraOff className="w-16 h-16 text-muted-foreground mb-4" />
                         <h2 className="text-2xl font-bold text-white mb-2">Camera Access</h2>
                         <p className="text-muted-foreground mb-6">We need your permission to use the camera for QR code scanning.</p>
-                        <Button onClick={getCameraPermission} size="lg">
+                        <Button onClick={startScan} size="lg">
                             <Camera className="mr-2 h-5 w-5" />
                             Grant Permission
                         </Button>
