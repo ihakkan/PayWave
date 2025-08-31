@@ -6,7 +6,7 @@ export function Header() {
   return (
     <header className="bg-primary/90 backdrop-blur-sm text-primary-foreground p-4 flex items-center justify-between sticky top-0 z-10 shadow-md">
       <Avatar className="h-9 w-9 cursor-pointer">
-        <AvatarImage src="https://picsum.photos/100" alt="User profile" data-ai-hint="profile person" />
+        <AvatarImage src="https://www.github.com/HakkanShah.png" alt="User profile" data-ai-hint="profile person" />
         <AvatarFallback>U</AvatarFallback>
       </Avatar>
       <div className="relative flex-1 mx-4">
